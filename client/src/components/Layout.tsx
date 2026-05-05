@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuthStore } from '../store/useAuthStore';
 import {
   LayoutDashboard,
   Users,
@@ -8,15 +8,18 @@ import {
   CreditCard,
   LogOut,
   Stethoscope,
-  UserCircle } from
-'lucide-react';
+  UserCircle
+} from 'lucide-react';
+
 interface LayoutProps {
   children: React.ReactNode;
 }
+
 export function Layout({ children }: LayoutProps) {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -127,7 +130,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-slate-900 truncate">
-                {user?.name}
+                {user?.fullname}
               </p>
               <p className="text-xs text-slate-500 truncate capitalize">
                 {user?.role}

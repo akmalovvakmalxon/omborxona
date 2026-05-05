@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useAuthStore } from '../../store/useAuthStore';
 import { mockAppointments, mockPatients } from '../../data/mockData';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { Modal } from '../../components/ui/Modal';
 import { Appointment } from '../../types';
 import { FileText, CheckCircle } from 'lucide-react';
 export function DoctorAppointments() {
-  const doctorId = 'd1'; // Mock doctor ID
+  const { user } = useAuthStore();
+  const doctorId = user?.id.toString() || 'd1'; // Use logged in doctor ID
   const [appointments, setAppointments] = useState<Appointment[]>(
     mockAppointments.filter((a) => a.doctorId === doctorId)
   );

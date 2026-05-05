@@ -1,18 +1,56 @@
-import React, { useState } from 'react';
-import {
-  mockAppointments,
-  mockDoctors,
-  mockPatients } from
-'../../data/mockData';
+import React, { useState, useEffect } from 'react';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { Filter } from 'lucide-react';
+import api from '../../utils/api';
+
+interface FetchedAppointment {
+  id: string;
+  patientName: string;
+  doctorName: string;
+  doctorId: string;
+  date: string;
+  time: string;
+  status: any;
+}
 export function AdminAppointments() {
+  const [appointments, setAppointments] = useState<FetchedAppointment[]>([]);
+  const [doctors, setDoctors] = useState<{id: string, name: string}[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
   const [doctorFilter, setDoctorFilter] = useState('all');
-  const filteredAppointments = mockAppointments.filter((apt) => {
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await api.get('/admin/appointments');
+        const fetched = res.data.appointments.map((a: any) => {
+          const dt = new Date(a.appointment_time);
+          return {
+            id: String(a.appointment_id),
+            patientName: a.patient_name,
+            doctorName: a.doctor_name,
+            doctorId: String(a.doctor_id),
+            date: dt.toLocaleDateString(),
+            time: dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            status: 'confirmed'
+          };
+        });
+        setAppointments(fetched);
+
+        const docRes = await api.get('/admin/doctors');
+        setDoctors(docRes.data.doctors.map((d: any) => ({
+          id: String(d.doctor_id),
+          name: d.fullname
+        })));
+      } catch (error) {
+        console.error('Failed to fetch appointments:', error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const filteredAppointments = appointments.filter((apt) => {
     const matchesStatus = statusFilter === 'all' || apt.status === statusFilter;
-    const matchesDoctor =
-    doctorFilter === 'all' || apt.doctorId === doctorFilter;
+    const matchesDoctor = doctorFilter === 'all' || apt.doctorId === doctorFilter;
     return matchesStatus && matchesDoctor;
   });
   return (
@@ -47,7 +85,7 @@ export function AdminAppointments() {
             className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm focus:ring-primary-500 focus:border-primary-500 bg-white">
             
             <option value="all">All Doctors</option>
-            {mockDoctors.map((d) =>
+            {doctors.map((d) =>
             <option key={d.id} value={d.id}>
                 {d.name}
               </option>
@@ -67,10 +105,6 @@ export function AdminAppointments() {
             <tbody className="divide-y divide-slate-200">
               {filteredAppointments.length > 0 ?
               filteredAppointments.map((apt) => {
-                const patient = mockPatients.find(
-                  (p) => p.id === apt.patientId
-                );
-                const doctor = mockDoctors.find((d) => d.id === apt.doctorId);
                 return (
                   <tr key={apt.id} className="hover:bg-slate-50">
                       <td className="px-6 py-4 whitespace-nowrap text-slate-600">
@@ -80,16 +114,15 @@ export function AdminAppointments() {
                         <div className="text-xs">{apt.time}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-slate-600">
-                        {patient?.name}
+                        {apt.patientName}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-slate-600">
-                        {doctor?.name}
+                        {apt.doctorName}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge status={apt.status} />
                       </td>
                     </tr>);
-
               }) :
 
               <tr>

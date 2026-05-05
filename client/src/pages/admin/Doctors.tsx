@@ -1,19 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search } from 'lucide-react';
-import { mockDoctors } from '../../data/mockData';
 import { Doctor } from '../../types';
 import { Modal } from '../../components/ui/Modal';
+import api from '../../utils/api';
+
 export function AdminDoctors() {
-  const [doctors, setDoctors] = useState<Doctor[]>(mockDoctors);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const response = await api.get('/admin/doctors');
+        const fetchedDoctors: Doctor[] = response.data.doctors.map((d: any) => ({
+          id: String(d.doctor_id),
+          name: d.fullname,
+          specialty: d.specialization,
+          phone: d.phone,
+          email: d.email,
+          schedule: 'TBD'
+        }));
+        setDoctors(fetchedDoctors);
+      } catch (error) {
+        console.error('Failed to fetch doctors:', error);
+      }
+    };
+    fetchDoctors();
+  }, []);
+
   // Form state
   const [formData, setFormData] = useState({
     name: '',
     specialty: '',
     phone: '',
     email: '',
+    password: '',
     schedule: ''
   });
   const filteredDoctors = doctors.filter(
@@ -29,6 +52,7 @@ export function AdminDoctors() {
         specialty: doctor.specialty,
         phone: doctor.phone,
         email: doctor.email,
+        password: '',
         schedule: doctor.schedule
       });
     } else {
@@ -38,38 +62,73 @@ export function AdminDoctors() {
         specialty: '',
         phone: '',
         email: '',
+        password: '',
         schedule: ''
       });
     }
     setIsModalOpen(true);
   };
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingDoctor) {
-      setDoctors(
-        doctors.map((d) =>
-        d.id === editingDoctor.id ?
+    try {
+      if (editingDoctor) {
+        await api.put(`/admin/doctors/${editingDoctor.id}`, {
+          fullname: formData.name,
+          email: formData.email,
+          password: formData.password || undefined,
+          specialization: formData.specialty,
+          phone: formData.phone
+        });
+        setDoctors(
+          doctors.map((d) =>
+          d.id === editingDoctor.id ?
+          {
+            ...d,
+            name: formData.name,
+            specialty: formData.specialty,
+            phone: formData.phone,
+            email: formData.email,
+            schedule: formData.schedule
+          } :
+          d
+          )
+        );
+      } else {
+        const response = await api.post('/admin/doctors', {
+          fullname: formData.name,
+          email: formData.email,
+          password: formData.password,
+          specialization: formData.specialty,
+          phone: formData.phone
+        });
+        const newDoctorData = response.data.doctor;
+        setDoctors([
+        ...doctors,
         {
-          ...formData,
-          id: d.id
-        } :
-        d
-        )
-      );
-    } else {
-      setDoctors([
-      ...doctors,
-      {
-        ...formData,
-        id: `d${Date.now()}`
-      }]
-      );
+          id: String(newDoctorData.id || `d${Date.now()}`),
+          name: newDoctorData.fullname || formData.name,
+          specialty: newDoctorData.specialization || formData.specialty,
+          phone: newDoctorData.phone || formData.phone,
+          email: newDoctorData.email || formData.email,
+          schedule: formData.schedule
+        }]
+        );
+      }
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Failed to save doctor:', error);
+      alert(error.response?.data?.message || 'Failed to save doctor');
     }
-    setIsModalOpen(false);
   };
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this doctor?')) {
-      setDoctors(doctors.filter((d) => d.id !== id));
+      try {
+        await api.delete(`/admin/doctors/${id}`);
+        setDoctors(doctors.filter((d) => d.id !== id));
+      } catch (error: any) {
+        console.error('Failed to delete doctor:', error);
+        alert(error.response?.data?.message || 'Failed to delete doctor');
+      }
     }
   };
   return (
@@ -235,23 +294,40 @@ export function AdminDoctors() {
               
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Schedule
-            </label>
-            <input
-              required
-              type="text"
-              placeholder="e.g., Mon-Fri, 09:00-17:00"
-              value={formData.schedule}
-              onChange={(e) =>
-              setFormData({
-                ...formData,
-                schedule: e.target.value
-              })
-              }
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500" />
-            
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Password {editingDoctor && "(Leave blank to keep current)"}
+              </label>
+              <input
+                required={!editingDoctor}
+                type="password"
+                value={formData.password}
+                onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  password: e.target.value
+                })
+                }
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Schedule
+              </label>
+              <input
+                required
+                type="text"
+                placeholder="e.g., Mon-Fri, 09:00-17:00"
+                value={formData.schedule}
+                onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  schedule: e.target.value
+                })
+                }
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500" />
+            </div>
           </div>
           <div className="pt-4 flex justify-end gap-3">
             <button

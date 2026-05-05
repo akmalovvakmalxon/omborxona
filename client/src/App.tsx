@@ -3,9 +3,8 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate } from
-'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+  Navigate
+} from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './pages/Login';
@@ -22,123 +21,132 @@ import { CashierPayments } from './pages/cashier/Payments';
 // Doctor Pages
 import { DoctorDashboard } from './pages/doctor/Dashboard';
 import { DoctorAppointments } from './pages/doctor/MyAppointments';
+
 export function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
+    <Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
 
-          {/* Admin Routes */}
-          <Route
-            path="/admin"
-            element={
+        {/* Admin Routes */}
+        <Route
+          path="/admin"
+          element={
             <ProtectedRoute allowedRole="admin">
-                <Layout>
-                  <AdminDashboard />
-                </Layout>
-              </ProtectedRoute>
-            } />
-          
-          <Route
-            path="/admin/doctors"
-            element={
-            <ProtectedRoute allowedRole="admin">
-                <Layout>
-                  <AdminDoctors />
-                </Layout>
-              </ProtectedRoute>
-            } />
-          
-          <Route
-            path="/admin/cashiers"
-            element={
-            <ProtectedRoute allowedRole="admin">
-                <Layout>
-                  <AdminCashiers />
-                </Layout>
-              </ProtectedRoute>
-            } />
-          
-          <Route
-            path="/admin/appointments"
-            element={
-            <ProtectedRoute allowedRole="admin">
-                <Layout>
-                  <AdminAppointments />
-                </Layout>
-              </ProtectedRoute>
-            } />
-          
+              <Layout>
+                <AdminDashboard />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
-          {/* Cashier Routes */}
-          <Route
-            path="/cashier"
-            element={
-            <ProtectedRoute allowedRole="cashier">
-                <Layout>
-                  <CashierDashboard />
-                </Layout>
-              </ProtectedRoute>
-            } />
-          
-          <Route
-            path="/cashier/patients"
-            element={
-            <ProtectedRoute allowedRole="cashier">
-                <Layout>
-                  <CashierPatients />
-                </Layout>
-              </ProtectedRoute>
-            } />
-          
-          <Route
-            path="/cashier/appointment"
-            element={
-            <ProtectedRoute allowedRole="cashier">
-                <Layout>
-                  <CreateAppointment />
-                </Layout>
-              </ProtectedRoute>
-            } />
-          
-          <Route
-            path="/cashier/payments"
-            element={
-            <ProtectedRoute allowedRole="cashier">
-                <Layout>
-                  <CashierPayments />
-                </Layout>
-              </ProtectedRoute>
-            } />
-          
+        <Route
+          path="/admin/doctors"
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <Layout>
+                <AdminDoctors />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
-          {/* Doctor Routes */}
-          <Route
-            path="/doctor"
-            element={
+        <Route
+          path="/admin/cashiers"
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <Layout>
+                <AdminCashiers />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/appointments"
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <Layout>
+                <AdminAppointments />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+
+        {/* Cashier Routes */}
+        <Route
+          path="/cashier"
+          element={
+            <ProtectedRoute allowedRole="cashier">
+              <Layout>
+                <CashierDashboard />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/cashier/patients"
+          element={
+            <ProtectedRoute allowedRole="cashier">
+              <Layout>
+                <CashierPatients />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/cashier/appointment"
+          element={
+            <ProtectedRoute allowedRole="cashier">
+              <Layout>
+                <CreateAppointment />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/cashier/payments"
+          element={
+            <ProtectedRoute allowedRole="cashier">
+              <Layout>
+                <CashierPayments />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+
+        {/* Doctor Routes */}
+        <Route
+          path="/doctor"
+          element={
             <ProtectedRoute allowedRole="doctor">
-                <Layout>
-                  <DoctorDashboard />
-                </Layout>
-              </ProtectedRoute>
-            } />
-          
-          <Route
-            path="/doctor/appointments"
-            element={
+              <Layout>
+                <DoctorDashboard />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/doctor/appointments"
+          element={
             <ProtectedRoute allowedRole="doctor">
-                <Layout>
-                  <DoctorAppointments />
-                </Layout>
-              </ProtectedRoute>
-            } />
-          
+              <Layout>
+                <DoctorAppointments />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
-          {/* Default Route */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
-    </AuthProvider>);
 
+        {/* Default Route */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Router>
+  );
 }

@@ -1,17 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search } from 'lucide-react';
-import { mockCashiers } from '../../data/mockData';
 import { Cashier } from '../../types';
 import { Modal } from '../../components/ui/Modal';
+import api from '../../utils/api';
+
 export function AdminCashiers() {
-  const [cashiers, setCashiers] = useState<Cashier[]>(mockCashiers);
+  const [cashiers, setCashiers] = useState<Cashier[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCashier, setEditingCashier] = useState<Cashier | null>(null);
+
+  useEffect(() => {
+    const fetchCashiers = async () => {
+      try {
+        const response = await api.get('/admin/cashiers');
+        const fetchedCashiers: Cashier[] = response.data.cashiers.map((c: any) => ({
+          id: String(c.id),
+          name: c.fullname,
+          email: c.email,
+          phone: c.phone || 'N/A'
+        }));
+        setCashiers(fetchedCashiers);
+      } catch (error) {
+        console.error('Failed to fetch cashiers:', error);
+      }
+    };
+    fetchCashiers();
+  }, []);
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    email: ''
+    email: '',
+    password: ''
   });
   const filteredCashiers = cashiers.filter((c) =>
   c.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -22,45 +43,73 @@ export function AdminCashiers() {
       setFormData({
         name: cashier.name,
         phone: cashier.phone,
-        email: cashier.email
+        email: cashier.email,
+        password: ''
       });
     } else {
       setEditingCashier(null);
       setFormData({
         name: '',
         phone: '',
-        email: ''
+        email: '',
+        password: ''
       });
     }
     setIsModalOpen(true);
   };
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingCashier) {
-      setCashiers(
-        cashiers.map((c) =>
-        c.id === editingCashier.id ?
+    try {
+      if (editingCashier) {
+        await api.put(`/admin/cashiers/${editingCashier.id}`, {
+          fullname: formData.name,
+          email: formData.email,
+          password: formData.password || undefined
+        });
+        setCashiers(
+          cashiers.map((c) =>
+          c.id === editingCashier.id ?
+          {
+            ...c,
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone
+          } :
+          c
+          )
+        );
+      } else {
+        const response = await api.post('/admin/cashiers', {
+          fullname: formData.name,
+          email: formData.email,
+          password: formData.password
+        });
+        const newCashierData = response.data.cashier;
+        setCashiers([
+        ...cashiers,
         {
-          ...formData,
-          id: c.id
-        } :
-        c
-        )
-      );
-    } else {
-      setCashiers([
-      ...cashiers,
-      {
-        ...formData,
-        id: `c${Date.now()}`
-      }]
-      );
+          id: String(newCashierData.id || `c${Date.now()}`),
+          name: newCashierData.fullname || formData.name,
+          email: newCashierData.email || formData.email,
+          phone: formData.phone
+        }]
+        );
+      }
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Failed to save cashier:', error);
+      alert(error.response?.data?.message || 'Failed to save cashier');
     }
-    setIsModalOpen(false);
   };
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this cashier?')) {
-      setCashiers(cashiers.filter((c) => c.id !== id));
+      try {
+        await api.delete(`/admin/cashiers/${id}`);
+        setCashiers(cashiers.filter((c) => c.id !== id));
+      } catch (error: any) {
+        console.error('Failed to delete cashier:', error);
+        alert(error.response?.data?.message || 'Failed to delete cashier');
+      }
     }
   };
   return (
@@ -194,7 +243,22 @@ export function AdminCashiers() {
               })
               }
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500" />
-            
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Password {editingCashier && "(Leave blank to keep current)"}
+            </label>
+            <input
+              required={!editingCashier}
+              type="password"
+              value={formData.password}
+              onChange={(e) =>
+              setFormData({
+                ...formData,
+                password: e.target.value
+              })
+              }
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-primary-500 focus:border-primary-500" />
           </div>
           <div className="pt-4 flex justify-end gap-3">
             <button

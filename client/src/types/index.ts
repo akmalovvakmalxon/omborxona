@@ -1,10 +1,21 @@
 export type Role = 'admin' | 'doctor' | 'cashier';
 
 export interface User {
-  id: string;
+  id: number;
+  fullname: string;
   email: string;
-  name: string;
   role: Role;
+}
+
+export interface Tokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface AuthResponse {
+  message: string;
+  user: User;
+  tokens: Tokens;
 }
 
 export interface Doctor {

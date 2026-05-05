@@ -1,29 +1,38 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { Stethoscope, Lock, Mail } from 'lucide-react';
-import { Role } from '../types';
+import { useAuthStore } from '../store/useAuthStore';
+import { Stethoscope, Lock, Mail, Loader2 } from 'lucide-react';
+import api from '../utils/api';
+import { AuthResponse } from '../types';
+
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    // Mock authentication logic
-    if (email === 'admin@clinic.com' && password === 'admin123') {
-      login(email, 'admin');
-      navigate('/admin');
-    } else if (email === 'doctor@clinic.com' && password === 'doctor123') {
-      login(email, 'doctor');
-      navigate('/doctor');
-    } else if (email === 'cashier@clinic.com' && password === 'cashier123') {
-      login(email, 'cashier');
-      navigate('/cashier');
-    } else {
-      setError('Invalid email or password');
+    setIsLoading(true);
+
+    try {
+      const response = await api.post<AuthResponse>('/auth/login', {
+        email,
+        password,
+      });
+
+      const { user, tokens } = response.data;
+      login(user, tokens);
+      
+      // Redirect based on role
+      navigate(`/${user.role}`);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Email yoki parol noto\'g\'ri');
+    } finally {
+      setIsLoading(false);
     }
   };
   return (
@@ -102,9 +111,13 @@ export function Login() {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
-                
-                Sign in
+                disabled={isLoading}
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  'Kirish'
+                )}
               </button>
             </div>
           </form>
@@ -113,25 +126,6 @@ export function Login() {
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-slate-500">
-                  Demo Accounts
-                </span>
-              </div>
-            </div>
-            <div className="mt-6 grid grid-cols-1 gap-2 text-xs text-slate-500">
-              <div className="bg-slate-50 p-2 rounded border border-slate-100 flex justify-between">
-                <span>Admin: admin@clinic.com</span>
-                <span className="font-mono">admin123</span>
-              </div>
-              <div className="bg-slate-50 p-2 rounded border border-slate-100 flex justify-between">
-                <span>Doctor: doctor@clinic.com</span>
-                <span className="font-mono">doctor123</span>
-              </div>
-              <div className="bg-slate-50 p-2 rounded border border-slate-100 flex justify-between">
-                <span>Cashier: cashier@clinic.com</span>
-                <span className="font-mono">cashier123</span>
               </div>
             </div>
           </div>

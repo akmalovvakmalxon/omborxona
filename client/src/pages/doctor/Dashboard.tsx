@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuthStore } from '../../store/useAuthStore';
 import { StatsCard } from '../../components/ui/StatsCard';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { Calendar, Users, Clock } from 'lucide-react';
@@ -9,7 +9,7 @@ import {
   mockDoctors } from
 '../../data/mockData';
 export function DoctorDashboard() {
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   // In a real app, we'd fetch the doctor ID based on the logged-in user.
   // For mock purposes, we'll assume the doctor is 'd1' (Dr. Sarah Jenkins)
   const doctorId = 'd1';
