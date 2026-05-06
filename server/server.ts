@@ -3,6 +3,7 @@ import cors from "cors"
 import pool from "./config/connection"
 import authRoutes from "./routes/auth.routes"
 import adminRoutes from "./routes/admin.routes"
+import cashierRoutes from "./routes/cashier.routes"
 import { setupSwagger } from "./config/swagger"
 
 const app = express()
@@ -12,6 +13,7 @@ app.use(express.json())
 
 app.use('/api/auth', authRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/cashier', cashierRoutes)
 
 setupSwagger(app)
 
