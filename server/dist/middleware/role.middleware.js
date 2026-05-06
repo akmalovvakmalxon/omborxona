@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authorizeAdmin = void 0;
+exports.authorizeDoctor = exports.authorizeCashier = exports.authorizeAdmin = void 0;
 const connection_1 = __importDefault(require("../config/connection"));
 const authorizeAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -33,3 +33,41 @@ const authorizeAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     }
 });
 exports.authorizeAdmin = authorizeAdmin;
+const authorizeCashier = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+        const result = yield connection_1.default.query('SELECT role FROM users WHERE id = $1', [userId]);
+        if (result.rows.length === 0 || (result.rows[0].role !== 'cashier' && result.rows[0].role !== 'admin')) {
+            return res.status(403).json({ message: 'Access denied. This action is restricted to cashiers and admins.' });
+        }
+        next();
+    }
+    catch (error) {
+        console.error('Role authorization error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+exports.authorizeCashier = authorizeCashier;
+const authorizeDoctor = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+        const result = yield connection_1.default.query('SELECT role FROM users WHERE id = $1', [userId]);
+        if (result.rows.length === 0 || (result.rows[0].role !== 'doctor' && result.rows[0].role !== 'admin')) {
+            return res.status(403).json({ message: 'Access denied. This action is restricted to doctors and admins.' });
+        }
+        next();
+    }
+    catch (error) {
+        console.error('Role authorization error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+exports.authorizeDoctor = authorizeDoctor;

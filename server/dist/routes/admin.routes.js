@@ -8,15 +8,21 @@ const router = (0, express_1.Router)();
 /**
  * @swagger
  * tags:
- *   name: Admin
- *   description: Administrative operations
+ *   - name: Admin - Doctors
+ *     description: Administrative operations for Doctors
+ *   - name: Admin - Cashiers
+ *     description: Administrative operations for Cashiers
+ *   - name: Admin - Appointments
+ *     description: Administrative operations for Appointments
+ *   - name: Admin - Schedule
+ *     description: Doctor availability scheduling
  */
 /**
  * @swagger
  * /api/admin/doctors:
  *   post:
  *     summary: Create a new doctor (Admin only)
- *     tags: [Admin]
+ *     tags: [Admin - Doctors]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -60,7 +66,7 @@ router.post('/doctors', auth_middleware_1.authenticateToken, role_middleware_1.a
  * /api/admin/doctors:
  *   get:
  *     summary: Get all doctors (Admin only)
- *     tags: [Admin]
+ *     tags: [Admin - Doctors]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -77,7 +83,7 @@ router.get('/doctors', auth_middleware_1.authenticateToken, role_middleware_1.au
  * /api/admin/doctors/{id}:
  *   put:
  *     summary: Update a doctor by doctor_id (Admin only)
- *     tags: [Admin]
+ *     tags: [Admin - Doctors]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -120,7 +126,7 @@ router.put('/doctors/:id', auth_middleware_1.authenticateToken, role_middleware_
  * /api/admin/doctors/{id}:
  *   delete:
  *     summary: Delete a doctor by doctor_id (Admin only)
- *     tags: [Admin]
+ *     tags: [Admin - Doctors]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -146,7 +152,7 @@ router.delete('/doctors/:id', auth_middleware_1.authenticateToken, role_middlewa
  * /api/admin/cashiers:
  *   post:
  *     summary: Create a new cashier (Admin only)
- *     tags: [Admin]
+ *     tags: [Admin - Cashiers]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -184,7 +190,7 @@ router.post('/cashiers', auth_middleware_1.authenticateToken, role_middleware_1.
  * /api/admin/cashiers:
  *   get:
  *     summary: Get all cashiers (Admin only)
- *     tags: [Admin]
+ *     tags: [Admin - Cashiers]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -201,7 +207,7 @@ router.get('/cashiers', auth_middleware_1.authenticateToken, role_middleware_1.a
  * /api/admin/cashiers/{id}:
  *   put:
  *     summary: Update a cashier by user_id (Admin only)
- *     tags: [Admin]
+ *     tags: [Admin - Cashiers]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -240,7 +246,7 @@ router.put('/cashiers/:id', auth_middleware_1.authenticateToken, role_middleware
  * /api/admin/cashiers/{id}:
  *   delete:
  *     summary: Delete a cashier by user_id (Admin only)
- *     tags: [Admin]
+ *     tags: [Admin - Cashiers]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -267,7 +273,7 @@ router.delete('/cashiers/:id', auth_middleware_1.authenticateToken, role_middlew
  *   get:
  *     summary: Get all appointments (Admin only)
  *     description: Retrieve all appointments showing which patient is assigned to which doctor.
- *     tags: [Admin]
+ *     tags: [Admin - Appointments]
  *     security:
  *       - bearerAuth: []
  *     responses:
@@ -279,4 +285,65 @@ router.delete('/cashiers/:id', auth_middleware_1.authenticateToken, role_middlew
  *         description: Forbidden
  */
 router.get('/appointments', auth_middleware_1.authenticateToken, role_middleware_1.authorizeAdmin, admin_controller_1.getAppointments);
+/**
+ * @swagger
+ * /api/admin/doctors/{id}/schedule:
+ *   post:
+ *     summary: Add time slots to a doctor's schedule (Admin only)
+ *     tags: [Admin - Schedule]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The doctor ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - slots
+ *             properties:
+ *               slots:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: date-time
+ *                 description: Array of ISO date strings
+ *     responses:
+ *       201:
+ *         description: Schedule updated successfully
+ *       404:
+ *         description: Doctor not found
+ *       401:
+ *         description: Unauthorized
+ */
+router.post('/doctors/:id/schedule', auth_middleware_1.authenticateToken, role_middleware_1.authorizeAdmin, admin_controller_1.addDoctorSchedule);
+/**
+ * @swagger
+ * /api/admin/doctors/{id}/schedule:
+ *   get:
+ *     summary: Get a doctor's schedule (Admin only)
+ *     tags: [Admin - Schedule]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The doctor ID
+ *     responses:
+ *       200:
+ *         description: A doctor's schedule
+ *       401:
+ *         description: Unauthorized
+ */
+router.get('/doctors/:id/schedule', auth_middleware_1.authenticateToken, role_middleware_1.authorizeAdmin, admin_controller_1.getDoctorSchedule);
 exports.default = router;

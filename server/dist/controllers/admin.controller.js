@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAppointments = exports.deleteCashier = exports.updateCashier = exports.getCashiers = exports.deleteDoctor = exports.updateDoctor = exports.getDoctors = exports.createCashier = exports.createDoctor = void 0;
+exports.getDoctorSchedule = exports.addDoctorSchedule = exports.getAppointments = exports.deleteCashier = exports.updateCashier = exports.getCashiers = exports.deleteDoctor = exports.updateDoctor = exports.getDoctors = exports.createCashier = exports.createDoctor = void 0;
 const argon2_1 = __importDefault(require("argon2"));
 const connection_1 = __importDefault(require("../config/connection"));
 const createDoctor = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -278,3 +278,49 @@ const getAppointments = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.getAppointments = getAppointments;
+// --- DOCTOR SCHEDULE ---
+const addDoctorSchedule = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { doctor_id, slots } = req.body; // slots: Array of strings (ISO format)
+    if (!doctor_id || !slots || !Array.isArray(slots)) {
+        return res.status(400).json({ message: 'doctor_id and an array of slots are required' });
+    }
+    try {
+        // Check if doctor exists
+        const doctorCheck = yield connection_1.default.query('SELECT id FROM doctors WHERE id = $1', [doctor_id]);
+        if (doctorCheck.rows.length === 0) {
+            return res.status(404).json({ message: 'Doctor not found' });
+        }
+        // Insert slots
+        if (slots.length > 0) {
+            // Using parameterized query for security
+            // Constructing the query carefully
+            const placeholders = slots.map((_, i) => `($1, $${i + 2})`).join(', ');
+            const query = `INSERT INTO doctor_schedule (doctor_id, available_time) VALUES ${placeholders} ON CONFLICT DO NOTHING`;
+            yield connection_1.default.query(query, [doctor_id, ...slots]);
+        }
+        res.status(201).json({ message: 'Schedule updated successfully' });
+    }
+    catch (error) {
+        console.error('Add schedule error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+exports.addDoctorSchedule = addDoctorSchedule;
+const getDoctorSchedule = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params; // doctor_id
+    try {
+        const query = `
+            SELECT id, available_time, is_booked 
+            FROM doctor_schedule 
+            WHERE doctor_id = $1 
+            ORDER BY available_time ASC
+        `;
+        const result = yield connection_1.default.query(query, [id]);
+        res.status(200).json({ schedule: result.rows });
+    }
+    catch (error) {
+        console.error('Get schedule error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+exports.getDoctorSchedule = getDoctorSchedule;

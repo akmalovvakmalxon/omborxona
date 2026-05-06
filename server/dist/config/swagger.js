@@ -16,8 +16,16 @@ const options = {
         },
         servers: [
             {
+                url: '/',
+                description: 'Current server (Auto-detected)',
+            },
+            {
+                url: 'https://clinica-1-o4l9.onrender.com',
+                description: 'Production server',
+            },
+            {
                 url: 'http://localhost:5000',
-                description: 'Local server',
+                description: 'Local development server',
             },
         ],
         components: {
@@ -35,7 +43,7 @@ const options = {
             },
         ],
     },
-    apis: ['./routes/*.ts'], // Path to the API docs
+    apis: ['./routes/*.ts', './dist/routes/*.js', './server/routes/*.ts', './server/dist/routes/*.js'], // Flexible paths for different environments
 };
 const swaggerSpec = (0, swagger_jsdoc_1.default)(options);
 const setupSwagger = (app) => {
