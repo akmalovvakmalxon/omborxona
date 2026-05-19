@@ -48,12 +48,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Validate AWS secrets
+        run: |
+          if [ -z "${{ secrets.AWS_OIDC_ROLE_ARN }}" ]; then
+            echo "::error::AWS_OIDC_ROLE_ARN is empty or not set in GitHub secrets! Please go to your GitHub repository -> Settings -> Secrets and variables -> Actions -> Secrets and add it."
+            exit 1
+          fi
+          if [ -z "${{ secrets.AWS_REGION }}" ]; then
+            echo "::error::AWS_REGION is empty or not set in GitHub secrets! Please go to your GitHub repository -> Settings -> Secrets and variables -> Actions -> Secrets and add it."
+            exit 1
+          fi
+          # Check if the ARN starts with arn:aws:iam
+          if [[ ! "${{ secrets.AWS_OIDC_ROLE_ARN }}" =~ ^arn:aws:iam::[0-9]{12}:role/.+$ ]]; then
+            echo "::error::AWS_OIDC_ROLE_ARN is malformed! It must look like 'arn:aws:iam::123456789012:role/RoleName'. Please check for leading/trailing spaces, quotes, or typos in your GitHub Secrets."
+            exit 1
+          fi
+
         # Login to AWS via OIDC instead of using AWS secrets access key that is dangerous
       - name: Configure AWS OIDC
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{secrets.AWS_OIDC_ROLE_ARN}}
-          aws-region: ${{secrets.AWS_REGION}}
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       # Login ECR
       - name: Login to ECR
