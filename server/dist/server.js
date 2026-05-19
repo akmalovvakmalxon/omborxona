@@ -21,12 +21,20 @@ const cashier_routes_1 = __importDefault(require("./routes/cashier.routes"));
 const doctor_routes_1 = __importDefault(require("./routes/doctor.routes"));
 const swagger_1 = require("./config/swagger");
 const app = (0, express_1.default)();
-app.use((0, cors_1.default)());
+app.use((0, cors_1.default)({
+    origin: '*',
+    methods: '*',
+    allowedHeaders: '*',
+    credentials: false
+}));
 app.use(express_1.default.json());
 app.use('/api/auth', auth_routes_1.default);
 app.use('/api/admin', admin_routes_1.default);
 app.use('/api/cashier', cashier_routes_1.default);
 app.use('/api/doctor', doctor_routes_1.default);
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'healthy', timestamp: new Date() });
+});
 (0, swagger_1.setupSwagger)(app);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => __awaiter(void 0, void 0, void 0, function* () {

@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "ts-node-dev server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix --no-error-on-unmatched-pattern",
+    "lint:ci": "eslint \"{src,apps,libs,test}/**/*.ts\" --no-error-on-unmatched-pattern",
+    "test": "jest --passWithNoTests"
   },
   "keywords": [],
   "author": "",
@@ -29,5 +32,13 @@
     "ts-node-dev": "^2.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@typescript-eslint/eslint-plugin": "^5.54.0",
+    "@typescript-eslint/parser": "^5.54.0",
+    "eslint": "^8.50.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5"
   }
 }

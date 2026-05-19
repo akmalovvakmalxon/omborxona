@@ -23,6 +23,10 @@ app.use('/api/admin', adminRoutes)
 app.use('/api/cashier', cashierRoutes)
 app.use('/api/doctor', doctorRoutes)
 
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'healthy', timestamp: new Date() });
+});
+
 setupSwagger(app)
 
 const PORT = process.env.PORT || 5000
