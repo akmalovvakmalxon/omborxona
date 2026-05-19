@@ -48,39 +48,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate AWS secrets
-        run: |
-          # Clean spaces, carriage returns, single and double quotes
-          CLEANED_ARN=$(echo "${{ secrets.AWS_OIDC_ROLE_ARN }}" | xargs | tr -d '"' | tr -d "'")
-          CLEANED_REGION=$(echo "${{ secrets.AWS_REGION }}" | xargs | tr -d '"' | tr -d "'")
-
-          echo "DEBUG: Cleaned ARN length: ${#CLEANED_ARN}"
-          echo "DEBUG: Cleaned ARN begins with: $(echo "$CLEANED_ARN" | cut -c 1-20)"
-          echo "DEBUG: Cleaned Region: $CLEANED_REGION"
-
-          if [ -z "$CLEANED_ARN" ]; then
-            echo "::error::AWS_OIDC_ROLE_ARN is empty or not set in GitHub secrets! Please go to your GitHub repository -> Settings -> Secrets and variables -> Actions -> Secrets and add it."
-            exit 1
-          fi
-          if [ -z "$CLEANED_REGION" ]; then
-            echo "::error::AWS_REGION is empty or not set in GitHub secrets! Please go to your GitHub repository -> Settings -> Secrets and variables -> Actions -> Secrets and add it."
-            exit 1
-          fi
-
-          # Check if the ARN is valid (relaxed pattern to support different partitions or custom paths)
-          if [[ ! "$CLEANED_ARN" =~ ^arn:aws[a-z-]*:iam::[0-9]+:role/.+$ ]]; then
-            echo "::error::AWS_OIDC_ROLE_ARN is malformed! It must look like 'arn:aws:iam::123456789012:role/RoleName'. Current value starts with '$(echo "$CLEANED_ARN" | cut -c 1-15)...' and has length ${#CLEANED_ARN}."
-            exit 1
-          fi
-
-          echo "CLEANED_AWS_OIDC_ROLE_ARN=$CLEANED_ARN" >> $GITHUB_ENV
-          echo "CLEANED_AWS_REGION=$CLEANED_REGION" >> $GITHUB_ENV
-
-        # Login to AWS via OIDC instead of using AWS secrets access key that is dangerous
-      - name: Configure AWS OIDC
+        # Login to AWS using traditional credentials
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       # Login ECR
