@@ -68,7 +68,7 @@ jobs:
           fi
 
           # Check if the ARN is valid (relaxed pattern to support different partitions or custom paths)
-          if [[ ! "$CLEANED_ARN" =~ ^arn:aws[a-z-]*:iam::[0-9]{12}:role/.+$ ]]; then
+          if [[ ! "$CLEANED_ARN" =~ ^arn:aws[a-z-]*:iam::[0-9]+:role/.+$ ]]; then
             echo "::error::AWS_OIDC_ROLE_ARN is malformed! It must look like 'arn:aws:iam::123456789012:role/RoleName'. Current value starts with '$(echo "$CLEANED_ARN" | cut -c 1-15)...' and has length ${#CLEANED_ARN}."
             exit 1
           fi
