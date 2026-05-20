@@ -96,6 +96,12 @@ jobs:
           script: |
             docker pull ${{secrets.ECR_REPOSITORY}}:latest
             
+            # Stop and remove any container publishing on port 5000 to avoid port allocation errors
+            CONFLICTING_CONTAINERS=$(docker ps -aq --filter publish=5000)
+            if [ -n "$CONFLICTING_CONTAINERS" ]; then
+              docker rm -f $CONFLICTING_CONTAINERS || true
+            fi
+
             docker stop clinika-website || true
             docker rm -f clinika-website || true
 
