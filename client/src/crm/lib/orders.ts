@@ -1,7 +1,7 @@
 // src/crm/lib/orders.ts
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://34.227.11.217:5000/api';
+const baseURL = import.meta.env.VITE_API_URL || '/api';
 
 export async function fetchOrders() {
   const res = await axios.get(`${baseURL}/crm/orders`);

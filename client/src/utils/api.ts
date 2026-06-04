@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://34.227.11.217:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -33,7 +33,7 @@ api.interceptors.response.use(
         const refreshToken = useAuthStore.getState().refreshToken;
         if (!refreshToken) throw new Error('No refresh token');
 
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://34.227.11.217:5000/api';
+        const baseUrl = import.meta.env.VITE_API_URL || '/api';
         const response = await axios.post(`${baseUrl}/auth/refresh`, {
           refreshToken,
         });
