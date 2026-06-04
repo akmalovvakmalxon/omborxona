@@ -14,6 +14,13 @@ const options = {
             version: '1.0.0',
             description: 'API documentation for the Clinica backend application',
         },
+        tags: [
+            { name: 'Auth', description: 'Authentication operations' },
+            { name: 'Admin', description: 'Admin operations' },
+            { name: 'Doctor', description: 'Doctor operations' },
+            { name: 'Cashier', description: 'Cashier operations' },
+            { name: 'CRM', description: 'Omborxona / CRM operations' }
+        ],
         servers: [
             {
                 url: '/',

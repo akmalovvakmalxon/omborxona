@@ -19,6 +19,7 @@ const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const admin_routes_1 = __importDefault(require("./routes/admin.routes"));
 const cashier_routes_1 = __importDefault(require("./routes/cashier.routes"));
 const doctor_routes_1 = __importDefault(require("./routes/doctor.routes"));
+const crm_routes_1 = __importDefault(require("./routes/crm.routes"));
 const swagger_1 = require("./config/swagger");
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
@@ -32,6 +33,7 @@ app.use('/api/auth', auth_routes_1.default);
 app.use('/api/admin', admin_routes_1.default);
 app.use('/api/cashier', cashier_routes_1.default);
 app.use('/api/doctor', doctor_routes_1.default);
+app.use('/api/crm', crm_routes_1.default);
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'healthy', timestamp: new Date() });
 });
