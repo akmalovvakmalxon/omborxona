@@ -39,6 +39,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Validate AWS Credentials
+        run: |
+          MISSING_SECRETS=()
+          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then MISSING_SECRETS+=("AWS_ACCESS_KEY_ID"); fi
+          if [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then MISSING_SECRETS+=("AWS_SECRET_ACCESS_KEY"); fi
+          if [ -z "${{ secrets.AWS_REGION }}" ]; then MISSING_SECRETS+=("AWS_REGION"); fi
+          if [ -z "${{ secrets.AWS_ACCOUNT_ID }}" ]; then MISSING_SECRETS+=("AWS_ACCOUNT_ID"); fi
+          if [ -z "${{ secrets.EC2_HOST }}" ]; then MISSING_SECRETS+=("EC2_HOST"); fi
+          if [ -z "${{ secrets.EC2_USER }}" ]; then MISSING_SECRETS+=("EC2_USER"); fi
+          if [ -z "${{ secrets.EC2_KEY }}" ]; then MISSING_SECRETS+=("EC2_KEY"); fi
+          
+          if [ ${#MISSING_SECRETS[@]} -ne 0 ]; then
+            echo "::error::Katta ehtimol bilan quyidagi GitHub Secrets (Maxfiy kalitlar) sozlanmagan:"
+            for secret in "${MISSING_SECRETS[@]}"; do
+              echo "::error:: - $secret"
+            done
+            echo "::error::Iltimos, ularni repository sozlamalaridan qo'shing: Settings -> Secrets and variables -> Actions -> Repository secrets."
+            exit 1
+          fi
+
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
