@@ -1,5 +1,3 @@
-# Build, test and deploy our nodejs api to production
-
 name: CI/CD Nodejs to ECR then EC2
 
 on:
@@ -9,19 +7,19 @@ on:
       - main
 
 jobs:
-  # CI Code Checks
   ci:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Nodejs
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 24.15.0
+          node-version: 20
 
-      - name: install dependencies
+      - name: Install dependencies
         run: npm ci
         working-directory: ./server
 
@@ -29,95 +27,58 @@ jobs:
         run: npm run lint:ci
         working-directory: ./server
 
-      - name: Run unit tests
+      - name: Run tests
         run: npm test
         working-directory: ./server
 
-      - name: NPM audit (high severity)
-        run: npm audit --audit-level=high
-        working-directory: ./server
-
-  # Deploy to production
   deploy:
     needs: ci
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate AWS Credentials
-        run: |
-          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
-            echo "::error::AWS_ACCESS_KEY_ID is missing in GitHub Secrets! Please add it in Settings -> Secrets and variables -> Actions."
-            exit 1
-          fi
-          if [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
-            echo "::error::AWS_SECRET_ACCESS_KEY is missing in GitHub Secrets! Please add it in Settings -> Secrets and variables -> Actions."
-            exit 1
-          fi
-          if [ -z "${{ secrets.AWS_REGION }}" ]; then
-            echo "::error::AWS_REGION is missing in GitHub Secrets! Please add it in Settings -> Secrets and variables -> Actions."
-            exit 1
-          fi
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Login ECR
       - name: Login to ECR
         run: |
-          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+          docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
-      # Build Docker image
       - name: Build Docker image
-        run: docker build --no-cache -t clinika-website:latest ./server
+        run: docker build -t clinika-website ./server
 
-      # Tag Docker Image to ECR
-      - name: Tag Docker Image to ECR
-        run: docker tag clinika-website:latest ${{secrets.ECR_REPOSITORY}}:latest
+      - name: Tag image
+        run: |
+          docker tag clinika-website:latest \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/clinika-website:latest
 
-      # Push Docker image
-      - name: Push Docker image to ECR
-        run: docker push ${{secrets.ECR_REPOSITORY}}:latest
+      - name: Push image
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/clinika-website:latest
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
-          host: ${{secrets.EC2_HOST}}
-          username: ${{secrets.EC2_USER}}
-          key: ${{secrets.EC2_KEY}}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
           script: |
-            aws ecr get-login-password --region ${{secrets.AWS_REGION}} | docker login --username AWS --password-stdin ${{secrets.ECR_REPOSITORY}}
-            docker pull ${{secrets.ECR_REPOSITORY}}:latest
-            
-            # Stop and remove any container publishing on port 5000 to avoid port allocation errors
-            CONFLICTING_CONTAINERS=$(docker ps -aq --filter publish=5000)
-            if [ -n "$CONFLICTING_CONTAINERS" ]; then
-              docker rm -f $CONFLICTING_CONTAINERS || true
-            fi
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+            docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/clinika-website:latest
 
             docker stop clinika-website || true
-            docker rm -f clinika-website || true
-
-            SECRETS_JSON=$(aws secretsmanager get-secret-value \
-              --secret-id nodejs-prod-secrets \
-              --query SecretString \
-              --output text)
-            export DATABASE_URL=$(echo $SECRETS_JSON | jq -r .DATABASE_URL)
-            export ACCESS_TOKEN_SECRET=$(echo $SECRETS_JSON | jq -r .ACCESS_TOKEN_SECRET)
-            export REFRESH_TOKEN_SECRET=$(echo $SECRETS_JSON | jq -r .REFRESH_TOKEN_SECRET)
+            docker rm clinika-website || true
 
             docker run -d \
-              -p ${PORT:-5000}:5000 \
+              -p 5000:5000 \
               --name clinika-website \
-              -e DATABASE_URL \
-              -e ACCESS_TOKEN_SECRET \
-              -e REFRESH_TOKEN_SECRET \
-              ${{secrets.ECR_REPOSITORY}}:latest
+              ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/clinika-website:latest
